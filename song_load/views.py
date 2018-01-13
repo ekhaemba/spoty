@@ -8,7 +8,7 @@ def index(request):
     page = request.GET.get('page')
     songs = paginator.get_page(page)
     context = {
-    'songs': songs
+        'songs': songs
     }
     return render(request, 'song_load/index.html', context)
 
@@ -16,9 +16,9 @@ def song(request, song_id):
     this_song = Song.objects.get(song_id=song_id)
     album = this_song.album
     context = {
-    'song':this_song,
-    'artists':this_song.artists.all(),
-    'album': album
+        'song':this_song,
+        'artists':this_song.artists.all(),
+        'album': album
     }
     return render(request, 'song_load/song.html', context)
 

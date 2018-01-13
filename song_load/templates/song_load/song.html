@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+{% if song %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+<h2>{{song.song_name}}</h2>
+<span>Added:{{song.date_added_to_lib}}</span>
+<br/>
+<span>Created:{{song.date_added_to_db}}</span>
+<br/>
+<h3>Album</h3>
+<section>
+  <p>{{album.album_name}}</p>
+  <a href="/song_load/album/{{album.album_id}}"><img src="{{ album.image_url }}" height=100 width=100></img></a>
+</section>
+<h3>Artists</h3>
+<div class="container">
+  <div class="list-group">
+  {% for artist in artists %}
+    <a class="list-group-item" href="/song_load/artist/{{ artist.artist_id }}">{{artist.artist_name}}</a>
+  {% endfor %}
+  </div>
+</div>
+{% else %}
+<p>No song with this ID</p>
+{% endif %}
+</html>
