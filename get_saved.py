@@ -10,7 +10,7 @@ import django
 from django.db import IntegrityError
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "spotmy_app.settings")
 django.setup()
-from song_load.models import Song, User
+from song_load.models import Song, User, Artist, Album
 
 scope = 'user-library-read'
 
@@ -29,39 +29,61 @@ if token:
     offset = index*limit
     results = sp.current_user_saved_tracks(offset=offset, limit=limit)
     total = results['total']
-    print(results['items'][0])
     try:
         new_user = User(user_name=username)
         new_user.save()
     except IntegrityError as e:
         print("User already exists")
+
     artist_counter = Counter()
     while offset < total:
         for item in results['items']:
             track = item['track']
-            artist_id = track['artists'][0]['id']
-            artist_name = track['artists'][0]['name']
+            album_obj = track['album']
+            #Artists
+            artists = track['artists']
+            #Song
             song_name = track['name']
             song_id = track['id']
             song_length = track['duration_ms']
             date_added_to_lib = item['added_at']
-            new_song = Song(artist_name=artist_name,song_name=song_name,song_id=song_id,song_length=song_length,date_added_to_lib=date_added_to_lib)
-            print(new_song)
+            #Album
+            image_url = album_obj['images'][1]['url']
+            album_name = album_obj['name']
+            album_id = album_obj['id']
+
+            new_song = Song(song_name=song_name, song_id=song_id,song_length=song_length, date_added_to_lib=date_added_to_lib)
+            new_album = Album(album_id=album_id, image_url=image_url, album_name=album_name)
+            #Save the song
             try:
                 new_song.save()
             except IntegrityError as e:
                 print("Song already exists: {}".format(new_song))
+                new_song = Song.objects.all().get(song_id=song_id)
+            #Save the album and add this song to it
+            try:
+                new_album.save()
+            except IntegrityError as e:
+                print("Album already exists: {}".format(new_album))
+                new_album = Album.objects.all().get(album_id=album_id)
+            new_album.song_set.add(new_song)
+            #For all the artists add them to this song
+            for ind, artist in enumerate(artists):
+                artist_id = artist['id']
+                artist_name = artist['name']
+                new_artist = Artist(artist_name=artist_name, artist_id=artist_id)
+                try:
+                    new_artist.save()
+                except IntegrityError as e:
+                    print("Artist already exists: {}".format(new_artist))
+                    new_artist = Artist.objects.all().get(artist_id=artist_id)
+                if ind == 0:
+                    new_artist.album_set.add(new_album)
+                new_song.artists.add(new_artist)
+            print(new_song)
         index += 1
         offset = index*limit
         results = sp.current_user_saved_tracks(offset=offset, limit=limit)
 
-    # top_list = artist_counter.most_common(AMOUNT_OF_TOP)
-    # labels, ys = zip(*top_list)
-    # s = pd.Series(ys,labels)
-    # plt.title('Top {} Songs in your saved library'.format(AMOUNT_OF_TOP))
-    # plt.ylabel('Number of Songs')
-    # plt.xlabel('Artist')
-    # s.plot(kind='bar',colormap='Accent')
-    # plt.show()
 else:
     print("Can't get token for", username)
